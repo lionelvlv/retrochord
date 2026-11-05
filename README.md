@@ -1,5 +1,9 @@
 # RetroChord
 
+[![CI](https://github.com/lionelvlv/discord-mockup/actions/workflows/ci.yml/badge.svg)](https://github.com/lionelvlv/discord-mockup/actions/workflows/ci.yml)
+
+**Live:** https://discord-mockup-woad.vercel.app
+
 A real-time chat application styled after Windows 98, built with React, TypeScript, and Firebase. Supports text channels, direct messages, voice/video calls, custom emojis, per-user themes, and more.
 
 ![General](https://i.imgur.com/7DAcL49.png)
@@ -91,6 +95,34 @@ A real-time chat application styled after Windows 98, built with React, TypeScri
 
 ---
 
+## How voice and video work
+
+Calls are a **peer-to-peer WebRTC mesh** (`src/features/voice/webrtc.ts`), with Firebase Realtime Database as the signaling channel for offers, answers and ICE candidates.
+- **Perfect Negotiation:** when two peers send offers at the same moment, the peer with the smaller user ID is "polite": it rolls back and accepts the other's offer. This removes the glare race without a central server.
+- **ICE candidates** that arrive before the remote description are queued and drained right after `setRemoteDescription`.
+- Turning on camera or screen share swaps the track with `replaceTrack` when a video sender already exists, so no renegotiation is needed. Otherwise it adds a track and renegotiates through the same polite/impolite path.
+- Incoming voice runs through a Web Audio filter chain for the walkie-talkie effect.
+
+The trade-off: in a mesh, each client uploads its stream to every other peer, so quality drops past about 4 people (see *Notes for Improvement*).
+
+---
+
+## Testing
+
+```bash
+npm test          # Vitest unit tests
+npm run typecheck # tsc --noEmit
+```
+
+Unit tests cover the pure logic behind the UI:
+- `src/lib/mentions.test.ts`: @mention matching. It found a bug where `@alice` also pinged a user named `al`.
+- `src/features/chat/unreadStore.test.ts`: unread and mention badge counts, DM rules, mark-as-read, subscriber notifications.
+- `src/lib/detectEmbeds.test.ts`: link-to-embed detection. It found a regex-order bug that sent Imgur `.gifv` links down the image path instead of mp4.
+
+GitHub Actions runs the typecheck, tests and production build on every push.
+
+---
+
 ## Project Structure
 
 ```
@@ -174,7 +206,7 @@ Create an app at [developers.giphy.com](https://developers.giphy.com) and copy t
 
 ### 4. Environment Variables
 
-Create `.env` in the project root:
+Copy `.env.example` to `.env` in the project root and fill it in:
 
 ```env
 VITE_FIREBASE_API_KEY=
