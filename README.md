@@ -1,6 +1,6 @@
 # RetroChord
 
-[![CI](https://github.com/lionelvlv/discord-mockup/actions/workflows/ci.yml/badge.svg)](https://github.com/lionelvlv/discord-mockup/actions/workflows/ci.yml)
+[![CI](https://github.com/lionelvlv/retrochord/actions/workflows/ci.yml/badge.svg)](https://github.com/lionelvlv/retrochord/actions/workflows/ci.yml)
 
 **Live:** https://discord-mockup-woad.vercel.app
 
