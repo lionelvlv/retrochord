@@ -92,7 +92,7 @@ const IMAGE_URL_RE    = /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|avif)(\?.*)?$/i;
 const GIPHY_URL_RE    = /^https?:\/\/media\d*\.giphy\.com\//i;
 const TENOR_URL_RE    = /^https?:\/\/(?:media\.tenor\.com|c\.tenor\.com)\//i;
 // Imgur: direct image or album/gallery
-const IMGUR_IMG_RE    = /^https?:\/\/(?:i\.)?imgur\.com\/([a-zA-Z0-9]+)\.(jpg|jpeg|png|gif|gifv|mp4|webm)/i;
+const IMGUR_IMG_RE    = /^https?:\/\/(?:i\.)?imgur\.com\/([a-zA-Z0-9]+)\.(jpg|jpeg|png|gifv|gif|mp4|webm)(?:[?#]|$)/i;
 const IMGUR_ALBUM_RE  = /^https?:\/\/imgur\.com\/(?:a\/|gallery\/)([a-zA-Z0-9]+)/i;
 
 export type EmbedKind =
