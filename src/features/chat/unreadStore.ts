@@ -1,4 +1,5 @@
 import { Message } from '../../types/message';
+import { mentionsUser } from '../../lib/mentions';
 
 interface UnreadEntry {
   unread: number;
@@ -53,13 +54,12 @@ export function updateUnread(
 ) {
   let unread = 0, mentions = 0;
   const mentionMessageIds = new Set<string>();
-  const lower = currentUsername.toLowerCase();
 
   for (const m of msgs) {
     if (m.timestamp <= lastReadTimestamp) continue;
     if (m.senderId === currentUserId) continue;
     if (m.deleted) continue;
-    const isExplicitMention = m.content?.toLowerCase().includes(`@${lower}`);
+    const isExplicitMention = mentionsUser(m.content, currentUsername);
     // For DMs: only count as unread if it's an explicit @mention
     // For channels: every unread message counts
     if (isDM && !isExplicitMention) continue;

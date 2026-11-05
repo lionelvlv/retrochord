@@ -14,6 +14,7 @@ import { db } from '../../config/firebase';
 import { Message } from '../../types/message';
 import { updateUnread, markRead } from '../../features/chat/unreadStore';
 import { soundManager } from '../../lib/sounds';
+import { mentionsUser } from '../../lib/mentions';
 import { useAuth } from '../../features/auth/useAuth';
 
 let _activeId: string | null = null;
@@ -79,7 +80,7 @@ export default function GlobalUnreadWatcher({ channels, dms }: WatcherProps) {
       const hasMention = newMsgs.some(m =>
         m.senderId !== cur.id &&
         !m.deleted &&
-        m.content?.toLowerCase().includes(`@${cur.username?.toLowerCase()}`)
+        mentionsUser(m.content, cur.username)
       );
       if (hasMention) soundManager.play('mention', 0.8);
     }

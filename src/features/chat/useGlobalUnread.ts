@@ -8,6 +8,7 @@ import { User } from '../../types/user';
 import { Channel } from '../../types/channel';
 import { updateUnread, markRead } from './unreadStore';
 import { soundManager } from '../../lib/sounds';
+import { mentionsUser } from '../../lib/mentions';
 
 // Track which channel/DM is currently active so we auto-markRead it
 let activeChannelId: string | null = null;
@@ -68,7 +69,7 @@ export function useGlobalUnread(
         if (m.senderId === uid || m.deleted) continue;
         if (m.timestamp <= lastRead) continue;
         unread++;
-        if (m.content?.toLowerCase().includes(`@${username}`)) {
+        if (mentionsUser(m.content, username)) {
           mentions++;
           // Sound only for genuinely new messages (not initial load)
           if (!isInitial && i >= prev) hasNewMention = true;
