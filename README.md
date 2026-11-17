@@ -7,6 +7,7 @@ A real-time, peer-to-peer chat application styled after Windows 98. RetroChord i
 ## Documentation
 *   [Technical Specification](docs/SPEC.md) — Architecture, protocols, and data models.
 *   [Decision Log](docs/DECISIONS.md) — Engineering tradeoffs and rationale.
+*   [AI Disclosure](docs/AI_DISCLOSURE.md)
 
 ## Capabilities
 - **Real-Time Communication:** Messaging, DMs, and presence using Firebase Firestore/RTDB.
