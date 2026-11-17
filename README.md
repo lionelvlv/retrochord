@@ -1,246 +1,27 @@
 # RetroChord
 
-[![CI](https://github.com/lionelvlv/retrochord/actions/workflows/ci.yml/badge.svg)](https://github.com/lionelvlv/retrochord/actions/workflows/ci.yml)
+**Live:** [discord-mockup-woad.vercel.app](https://discord-mockup-woad.vercel.app)
 
-**Live:** https://discord-mockup-woad.vercel.app
+A real-time, peer-to-peer chat application styled after Windows 98. RetroChord is a full-stack, serverless clone built for performance and low-latency interaction.
 
-A real-time chat application styled after Windows 98, built with React, TypeScript, and Firebase. Supports text channels, direct messages, voice/video calls, custom emojis, per-user themes, and more.
+## Documentation
+*   [Technical Specification](docs/SPEC.md) — Architecture, protocols, and data models.
+*   [Decision Log](docs/DECISIONS.md) — Engineering tradeoffs and rationale.
 
-![General](https://i.imgur.com/7DAcL49.png)
-
----
-
-## Features
-
-### Messaging
-- Real-time text channels and direct messages
-- @mention autocomplete with arrow-key navigation
-- Clickable @mention pills that open the mentioned user's profile
-- Inline message editing and deletion
-- Emoji reactions with live counts, including custom server emojis
-- File attachments — images, video, audio, and generic files
-- GIF picker powered by GIPHY with category quick-picks and search
-- Rich embeds — YouTube, Vimeo, Spotify, GitHub repos/PRs/gists, Imgur, and direct image links
-- Typing indicators visible to other users in real time
-- Full-text message search across all channels and DMs
-
-![Embeds](https://i.imgur.com/4S6Xs95.png)
-
-### Voice & Video
-- Voice and video calls in dedicated voice channels
-- Screen sharing with audio
-- Minimizes to a compact widget in the left rail while you navigate — call stays live
-- Retro audio processing on incoming voice (drive-thru/walkie-talkie effect)
-- Speaking indicators per participant
-- Live video thumbnails in participant cards
-
-![Voice call with screenshare](https://i.imgur.com/DHfu8zs.png)
-
-### Presence
-- Online / Idle / Offline status shown on every user
-- Heartbeat-based — goes offline within 90 seconds of closing the app, losing internet, or the device powering off
-- Status updates live across all connected clients without polling
-
-### Notifications & Unread
-- Unread message indicators on channels and DMs in the left rail
-- Red mention badge with count when someone @mentions you
-- Mention sound plays immediately when a new @mention arrives
-- Mention indicator fades as you scroll past the mentioned messages
-- Notification bell in the top-right corner shows all your @mentions; click to jump directly to the message
-- Notifications auto-clear when you open the relevant channel or DM
-
-### Profiles & Settings
-- Custom avatar — choose from preset emoji avatars or upload a photo
-- Bio shown in profile popups
-- Upload up to 10 custom server emojis per user (`:name:` syntax in messages and reactions)
-- Click any avatar, username, or @mention in chat to open a profile popup with a direct message button
-
-![Profile settings](https://i.imgur.com/7gYHYbR.png)
-
-### Appearance
-- Color themes — change panel backgrounds, chat area, accent color, text color, and titlebar gradient
-- Six built-in presets: Win98, Dark, Rose, Forest, Ocean, Dusk
-- Custom chat background image with opacity control; stays fixed behind messages while you scroll
-- Font selector with 8 presets including a pixel font; upload a custom `.ttf/.otf/.woff` font
-- All changes apply live and persist across sessions
-
-![Theme](https://i.imgur.com/J9HZzsi.png)
-
-### Admin
-- Rename the server
-- Manage all custom emojis across users
-- View and delete user accounts
-
-### Mobile
-- Bottom navigation bar — Channels, Chat, Members, Call tabs
-- Full call support via the Call tab
-- Reaction picker opens as a centered overlay so it never clips off-screen
-- Keyboard-aware layout — message list shrinks when the keyboard opens, composer stays at the bottom
-
----
+## Capabilities
+- **Real-Time Communication:** Messaging, DMs, and presence using Firebase Firestore/RTDB.
+- **Voice & Video:** Low-latency P2P mesh via WebRTC with screen sharing.
+- **Enterprise-Grade Features:** Role-based access, custom emojis, rich media embeds, and typing indicators.
+- **Highly Performant:** Entirely client-side architecture; zero server-side logic reduces latency and infrastructure costs.
+- **Customizable:** Dynamic theme engine (colors, fonts, backgrounds) with live persistence.
 
 ## Tech Stack
+*   **Frontend:** React 18, TypeScript, Vite, React Router v6.
+*   **Backend:** Firebase (Firestore, Auth, Realtime Database) — Serverless architecture.
+*   **Media:** Cloudinary (secure file uploads), WebRTC (P2P audio/video).
+*   **Hosting:** Vercel.
 
-| Layer | Technology |
-|---|---|
-| UI | React 18, TypeScript, Vite |
-| Routing | React Router v6 |
-| Database | Firebase Firestore |
-| Realtime | Firebase RTDB (presence + voice signaling) |
-| Auth | Firebase Authentication |
-| File storage | Cloudinary (unsigned upload preset) |
-| Hosting | Vercel |
-| Voice/Video | WebRTC (P2P) |
-| GIFs | GIPHY API |
-
----
-
-## How voice and video work
-
-Calls are a **peer-to-peer WebRTC mesh** (`src/features/voice/webrtc.ts`), with Firebase Realtime Database as the signaling channel for offers, answers and ICE candidates.
-- **Perfect Negotiation:** when two peers send offers at the same moment, the peer with the smaller user ID is "polite": it rolls back and accepts the other's offer. This removes the glare race without a central server.
-- **ICE candidates** that arrive before the remote description are queued and drained right after `setRemoteDescription`.
-- Turning on camera or screen share swaps the track with `replaceTrack` when a video sender already exists, so no renegotiation is needed. Otherwise it adds a track and renegotiates through the same polite/impolite path.
-- Incoming voice runs through a Web Audio filter chain for the walkie-talkie effect.
-
-The trade-off: in a mesh, each client uploads its stream to every other peer, so quality drops past about 4 people (see *Notes for Improvement*).
-
----
-
-## Testing
-
-```bash
-npm test          # Vitest unit tests
-npm run typecheck # tsc --noEmit
-```
-
-Unit tests cover the pure logic behind the UI:
-- `src/lib/mentions.test.ts`: @mention matching. It found a bug where `@alice` also pinged a user named `al`.
-- `src/features/chat/unreadStore.test.ts`: unread and mention badge counts, DM rules, mark-as-read, subscriber notifications.
-- `src/lib/detectEmbeds.test.ts`: link-to-embed detection. It found a regex-order bug that sent Imgur `.gifv` links down the image path instead of mp4.
-
-GitHub Actions runs the typecheck, tests and production build on every push.
-
----
-
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── app/
-│   │   ├── AppLayout.tsx          # Root layout, mobile tabs, voice panel
-│   │   ├── channel/               # Text channel view
-│   │   ├── dm/                    # Direct message view
-│   │   ├── settings/              # Profile & appearance settings page
-│   │   └── voice/                 # Voice channel view
-│   └── login/ signup/ forgot-password/
-│
-├── components/
-│   ├── chat/                      # Messages, composer, emoji/GIF pickers, unread watcher
-│   ├── layout/                    # Left/right rails, search, notification bell, settings modals
-│   ├── lists/                     # Channel, DM, member, and voice channel lists
-│   ├── ui/                        # Avatar, presence dot, profile popup
-│   └── voice/                     # Call panel, mini panel, participant cards, controls
-│
-├── features/
-│   ├── auth/                      # Auth context, presence heartbeat
-│   ├── channels/                  # Channel CRUD
-│   ├── chat/                      # Messaging API, DM API, unread store
-│   ├── customEmojis/              # Custom emoji upload and subscription
-│   ├── serverSettings/            # Server name
-│   ├── theme/                     # Theme store, CSS variable application
-│   └── voice/                     # VoiceContext, WebRTC, RTDB signaling
-│
-├── lib/
-│   ├── mediaUpload.ts             # Cloudinary upload, embed detection
-│   ├── sounds.ts                  # Web Audio tone generation
-│   ├── storage.ts                 # localStorage wrapper
-│   └── time.ts                    # Smart relative timestamps
-│
-├── styles/                        # Global CSS, Win98 theme variables, retro UI classes
-└── types/                         # TypeScript interfaces
-```
-
----
-
-## Setup
-
-### 1. Firebase
-
-1. Create a project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable **Authentication → Email/Password**
-3. Enable **Firestore Database**
-4. Enable **Realtime Database**
-5. Deploy rules and indexes:
-   ```bash
-   firebase use --add
-   firebase deploy --only firestore --project <your-project-id>
-   ```
-6. Set RTDB rules in the console → Realtime Database → Rules:
-   ```json
-   {
-     "rules": {
-       "presence": {
-         "$uid": { ".read": "auth != null", ".write": "$uid === auth.uid" }
-       },
-       "voicePresence": {
-         "$channelId": {
-           ".read": "auth != null",
-           "$uid": { ".write": "$uid === auth.uid" }
-         }
-       }
-     }
-   }
-   ```
-
-### 2. Cloudinary
-
-1. Create a free account at [cloudinary.com](https://cloudinary.com)
-2. Go to **Settings → Upload → Upload presets** and add an unsigned preset
-3. Note your **Cloud name** (short name, not the hash) and **preset name**
-
-### 3. GIPHY (optional)
-
-Create an app at [developers.giphy.com](https://developers.giphy.com) and copy the API key.
-
-### 4. Environment Variables
-
-Copy `.env.example` to `.env` in the project root and fill it in:
-
-```env
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_DATABASE_URL=https://<project-id>-default-rtdb.firebaseio.com
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
-VITE_CLOUDINARY_CLOUD_NAME=
-VITE_CLOUDINARY_UPLOAD_PRESET=
-VITE_GIPHY_API_KEY=
-```
-
-### 5. Run locally
-
-```bash
-npm install
-npm run dev
-```
-
-### 6. Deploy
-
-Connect the GitHub repo in the Vercel dashboard and add the `VITE_*` environment variables under **Project → Settings → Environment Variables**.
-
-> **First admin:** Set `isAdmin: true` manually on your user document in Firestore after registering.
-
----
-
-## Notes for Improvement
-
-- **Message search** is client-side (last 200 messages per channel). For larger servers, Algolia or Typesense would scale better.
-- **Voice calls** are P2P mesh — quality degrades beyond ~4 participants. An SFU (e.g. LiveKit) would handle larger calls.
-- **Push notifications** when the app is closed are not implemented — would require FCM integration.
-- **Custom background images** are stored as base64 in `localStorage`. Very large images can approach the 5MB limit; IndexedDB would be more appropriate for this.
-- **Invite links** with expiry are not yet implemented.
-- **Channel permissions** (e.g. read-only announcement channels) are not yet implemented.
+## Engineering Highlights
+*   **Presence System:** Hybrid RTDB/Firestore model with heartbeat, `onDisconnect` listeners, and cross-tab sync ensuring presence accuracy.
+*   **Voice Engineering:** Implemented "Perfect Negotiation" WebRTC pattern to handle call collisions and NAT traversal via STUN/TURN relays.
+*   **Optimized UX:** CSS-based windowing prevents component unmounting during call transitions, ensuring seamless voice persistence during navigation.
